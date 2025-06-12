@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Steam Game Trends</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Game Trend Comparison</h1>
+    <input id="appIdInput" placeholder="Enter App IDs (comma-separated)">
+    <button onclick="fetchGameStats()">Compare</button>
+    <p id="loadingMessage" style="display:none;">🔄 Fetching data...</p>
+
+    <canvas id="statsChart" width="900" height="400"></canvas>
+    <canvas id="trendChart" width="900" height="400"></canvas>
+
+    <div id="tagsOutput"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

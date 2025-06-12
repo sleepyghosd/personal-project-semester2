@@ -1,0 +1,32 @@
+
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background: #f4f4f4;
+}
+
+input {
+    padding: 10px;
+    width: 300px;
+    margin: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+canvas {
+    margin: 20px auto;
+    display: block;
+    background: #fff;
+    border: 1px solid #ccc;
+}
+
+#tagsOutput {
+    margin-top: 20px;
+    text-align: left;
+    max-width: 800px;
+    margin-inline: auto;
+}
