@@ -13,7 +13,6 @@ STEAM_API_BASE = "https://store.steampowered.com/api/appdetails"
 STEAMSPY_BASE = "https://steamspy.com/api.php"
 STEAM_APPS_FILE = "steam_apps.json"
 
-# Load app name → appid mapping
 def load_steam_app_ids():
     if not os.path.exists(STEAM_APPS_FILE):
         raise FileNotFoundError("steam_apps.json not found. Please download it from https://api.steampowered.com/ISteamApps/GetAppList/v2/")
@@ -39,7 +38,7 @@ def get_steamspy_details(app_id):
         return res.json()
     return None
 
-# Google Trends with delay
+
 def get_google_trends_data(names):
     pytrends = TrendReq(hl='en-US', tz=360)
     trends = {}

@@ -1,4 +1,3 @@
-
 let chartInstance = null;
 let trendChartInstance = null;
 
@@ -12,7 +11,7 @@ function fetchGameStats() {
 
     loadingMsg.style.display = "block";
 
-    fetch(`http://localhost:5000/game_stats?app_ids=${encodeURIComponent(input)}`)
+    fetch(`http://localhost:5000/game_stats?names=${encodeURIComponent(input)}`)
         .then(res => res.json())
         .then(({ games, trends }) => {
             loadingMsg.style.display = "none";
@@ -27,9 +26,11 @@ function fetchGameStats() {
 
             games.forEach(game => {
                 tagsOutput.innerHTML += `
-                    <h3>${game.Title}</h3>
-                    <p><strong>Genres:</strong> ${game.Genres.join(', ')}</p>
-                    <p><strong>Top Tags:</strong> ${game.Tags.join(', ')}</p>
+                    <div class="game-card">
+                        <h3>${game.Title}</h3>
+                        <p><strong>Genres:</strong> ${game.Genres.join(', ')}</p>
+                        <p><strong>Top Tags:</strong> ${game.Tags.join(', ')}</p>
+                    </div>
                 `;
             });
         });
