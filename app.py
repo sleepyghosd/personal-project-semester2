@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
 import time
+import os
+import json
 from pytrends.request import TrendReq
 
 app = Flask(__name__)
@@ -9,6 +11,19 @@ CORS(app)
 
 STEAM_API_BASE = "https://store.steampowered.com/api/appdetails"
 STEAMSPY_BASE = "https://steamspy.com/api.php"
+STEAM_APPS_FILE = "steam_apps.json"
+
+# Load app name → appid mapping
+def load_steam_app_ids():
+    if not os.path.exists(STEAM_APPS_FILE):
+        raise FileNotFoundError("steam_apps.json not found. Please download it from https://api.steampowered.com/ISteamApps/GetAppList/v2/")
+    
+    with open(STEAM_APPS_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        apps = data.get("applist", {}).get("apps", [])
+        return {app["name"].lower(): app["appid"] for app in apps}
+
+name_to_appid = load_steam_app_ids()
 
 def get_steam_api_details(app_id):
     res = requests.get(f"{STEAM_API_BASE}?appids={app_id}")
@@ -24,7 +39,7 @@ def get_steamspy_details(app_id):
         return res.json()
     return None
 
-# Updated function with delay to avoid 429 errors
+# Google Trends with delay
 def get_google_trends_data(names):
     pytrends = TrendReq(hl='en-US', tz=360)
     trends = {}
@@ -32,7 +47,7 @@ def get_google_trends_data(names):
     for name in names:
         try:
             pytrends.build_payload([name], timeframe='now 7-d')
-            time.sleep(10)  
+            time.sleep(15)
             data = pytrends.interest_over_time()
             if not data.empty:
                 trends[name] = data[name].tolist()
@@ -46,17 +61,22 @@ def get_google_trends_data(names):
 
 @app.route('/game_stats', methods=['GET'])
 def get_game_stats():
-    app_ids = request.args.get('app_ids')
-    if not app_ids:
-        return jsonify({"error": "Missing app_ids"}), 400
+    game_names = request.args.get('names')
+    if not game_names:
+        return jsonify({"error": "Missing game names (use 'names=...')"}), 400
 
-    app_id_list = app_ids.split(',')
+    name_list = [name.strip().lower() for name in game_names.split(',')]
     results = []
     names_for_trends = []
 
-    for app_id in app_id_list:
-        steamspy = get_steamspy_details(app_id.strip())
-        steam = get_steam_api_details(app_id.strip())
+    for name in name_list:
+        app_id = name_to_appid.get(name)
+        if not app_id:
+            print(f"Game not found: {name}")
+            continue
+
+        steamspy = get_steamspy_details(app_id)
+        steam = get_steam_api_details(app_id)
 
         if not steamspy or not steam:
             continue
@@ -65,7 +85,6 @@ def get_game_stats():
 
         tag_items = sorted(steamspy.get("tags", {}).items(), key=lambda x: x[1], reverse=True)
         top_tags = [tag for tag, _ in tag_items[:3]]
-
         genres = [g['description'] for g in steam.get('genres', [])]
 
         results.append({
