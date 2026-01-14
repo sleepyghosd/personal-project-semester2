@@ -3,35 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Trends</title>
+    <meta name="description" content="Compare Steam game statistics and Google Trends data for multiple games.">
+    <title>Game Trends Analyzer</title>
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>🎮 Game Trends</h1>
-        
-        <div class="input-section">
-            <div class="input-group">
-                <input id="appIdInput" placeholder="Enter Game Names (e.g., CS:GO, Dota 2, PUBG)">
-                <button onclick="fetchGameStats()">Compare Games</button>
-            </div>
+    <header>
+        <div class="container">
+            <h1>Game Trends Analyzer</h1>
         </div>
+    </header>
+    
+    <main class="container">
+        <section class="input-section">
+            <div class="input-group">
+                <input id="appIdInput" placeholder="Enter Game Names (e.g., Counter-Strike: Global Offensive, Dota 2)">
+                <button onclick="fetchGameStats()">Analyze Games</button>
+            </div>
+        </section>
         
-        <p id="loadingMessage" style="display:none;">🔄 Fetching data...</p>
+        <p id="loadingMessage" style="display:none;"> Analyzing data...</p>
 
-        <div class="charts-section">
+        <section class="charts-section">
             <div class="chart-container">
                 <canvas id="statsChart" width="900" height="400"></canvas>
             </div>
             <div class="chart-container">
                 <canvas id="trendChart" width="900" height="400"></canvas>
             </div>
+        </section>
+
+        <section id="tagsOutput"></section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Game Trends Analyzer. Built for data-driven gaming insights.</p>
         </div>
+    </footer>
 
-        <div id="tagsOutput"></div>
-    </div>
-
-   <script src="/static/script.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>
