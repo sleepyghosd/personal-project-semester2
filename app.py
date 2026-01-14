@@ -6,7 +6,7 @@ import os
 import json
 from pytrends.request import TrendReq
 
-app = Flask(__name__, static_folder='.')
+app = Flask(__name__, static_folder='static')
 CORS(app)
 
 STEAM_API_BASE = "https://store.steampowered.com/api/appdetails"
