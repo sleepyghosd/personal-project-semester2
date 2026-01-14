@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import requests
 import time
@@ -56,9 +56,11 @@ def get_google_trends_data(names):
             print(f"Error retrieving trends for {name}: {e}")
             trends[name] = []
 
+    return trends
+
 @app.route('/')
 def index():
-    return app.send_static_file('index.html')
+    return send_from_directory('.', 'index.html')
 
 @app.route('/game_stats', methods=['GET'])
 def get_game_stats():
