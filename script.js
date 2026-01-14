@@ -12,28 +12,39 @@ function fetchGameStats() {
     loadingMsg.style.display = "block";
 
     fetch(`http://localhost:5000/game_stats?names=${encodeURIComponent(input)}`)
-        .then(res => res.json())
-        .then(({ games, trends }) => {
-            loadingMsg.style.display = "none";
+    .then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+    })
+    .then(({ games, trends }) => {
+        loadingMsg.style.display = "none";
 
-            const labels = games.map(g => g.Title);
-            const owners = games.map(g => parseOwnerRange(g.Owners));
-            const players = games.map(g => g.Players_2Weeks);
-            const reviews = games.map(g => g.ReviewScore);
+        const labels = games.map(g => g.Title);
+        const owners = games.map(g => parseOwnerRange(g.Owners));
+        const players = games.map(g => g.Players_2Weeks);
+        const reviews = games.map(g => g.ReviewScore);
 
-            renderChart(labels, owners, players, reviews);
-            renderTrends(trends);
+        renderChart(labels, owners, players, reviews);
+        renderTrends(trends);
 
-            games.forEach(game => {
-                tagsOutput.innerHTML += `
-                    <div class="game-card">
-                        <h3>${game.Title}</h3>
-                        <p><strong>Genres:</strong> ${game.Genres.join(', ')}</p>
-                        <p><strong>Top Tags:</strong> ${game.Tags.join(', ')}</p>
-                    </div>
-                `;
-            });
+        games.forEach(game => {
+            tagsOutput.innerHTML += `
+                <div class="game-card">
+                    <h3>${game.Title}</h3>
+                    <p><strong>Genres:</strong> ${game.Genres.join(', ')}</p>
+                    <p><strong>Top Tags:</strong> ${game.Tags.join(', ')}</p>
+                </div>
+            `;
         });
+    })
+    .catch(error => {
+        loadingMsg.style.display = "none";
+        console.error('Fetch error:', error);
+        alert(`Error fetching game stats: ${error.message}. Ensure the Flask server is running on http://localhost:5000.`);
+    });
+        
 }
 
 function parseOwnerRange(range) {

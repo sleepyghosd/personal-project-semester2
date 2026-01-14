@@ -6,7 +6,7 @@ import os
 import json
 from pytrends.request import TrendReq
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 CORS(app)
 
 STEAM_API_BASE = "https://store.steampowered.com/api/appdetails"
@@ -56,7 +56,9 @@ def get_google_trends_data(names):
             print(f"Error retrieving trends for {name}: {e}")
             trends[name] = []
 
-    return trends
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
 
 @app.route('/game_stats', methods=['GET'])
 def get_game_stats():
