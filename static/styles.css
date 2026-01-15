@@ -171,11 +171,11 @@ button:active {
 
 .chart-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 0.8rem;
     padding: 0;
-    height: 30px;
+    height: auto;
 }
 
 .chart-title {
@@ -243,10 +243,11 @@ canvas {
     flex-direction: column;
     gap: 1.5rem;
     overflow-y: auto;
-    background: rgba(60, 60, 60, 0.3);
+    background: rgba(60, 60, 60, 0.5);
     border-radius: 6px;
     padding: 1.5rem;
-    border: 1px solid rgba(100, 100, 100, 0.4);
+    border: 2.5px solid rgba(120, 120, 120, 0.7);
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
 }
 
 .game-card {
@@ -292,7 +293,6 @@ canvas {
     font-size: 0.95rem;
     margin-bottom: 0.8rem;
     font-weight: 600;
-    padding-right: 28px;
 }
 
 .game-card p {

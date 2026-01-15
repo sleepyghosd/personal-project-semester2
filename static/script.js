@@ -42,7 +42,6 @@ function fetchGameStats() {
             const card = document.createElement("div");
             card.className = "game-card";
             card.innerHTML = `
-                <button class="game-card-close" onclick="this.parentElement.remove()">×</button>
                 <h3>game info: ${game.Title}</h3>
                 <p><strong>genres:</strong> ${game.Genres.join(', ')}</p>
                 <p><strong>top tags:</strong> ${game.Tags.join(', ')}</p>
