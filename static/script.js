@@ -1,13 +1,15 @@
 let chartInstance = null;
 let trendChartInstance = null;
+let playersChartInstance = null;
+let allGamesData = [];
 
 function fetchGameStats() {
     const input = document.getElementById("appIdInput").value.trim();
     const loadingMsg = document.getElementById("loadingMessage");
-    const tagsOutput = document.getElementById("tagsOutput");
-    tagsOutput.innerHTML = "";
+    const gameInfoContainer = document.getElementById("gameInfoContainer");
+    gameInfoContainer.innerHTML = "";
     
-    if (!input) return alert("Enter some App IDs");
+    if (!input) return alert("Enter some game names");
 
     loadingMsg.style.display = "block";
 
@@ -20,23 +22,32 @@ function fetchGameStats() {
     })
     .then(({ games, trends }) => {
         loadingMsg.style.display = "none";
+        allGamesData = games;
 
         const labels = games.map(g => g.Title);
         const owners = games.map(g => parseOwnerRange(g.Owners));
         const players = games.map(g => g.Players_2Weeks);
         const reviews = games.map(g => g.ReviewScore);
 
+        // Create tabs
+        createTabs(games);
+
+        // Render charts
         renderChart(labels, owners, players, reviews);
         renderTrends(trends);
+        renderPlayersChart(labels, players);
 
-        games.forEach(game => {
-            tagsOutput.innerHTML += `
-                <div class="game-card">
-                    <h3>${game.Title}</h3>
-                    <p><strong>Genres:</strong> ${game.Genres.join(', ')}</p>
-                    <p><strong>Top Tags:</strong> ${game.Tags.join(', ')}</p>
-                </div>
+        // Render game info cards
+        games.forEach((game, index) => {
+            const card = document.createElement("div");
+            card.className = "game-card";
+            card.innerHTML = `
+                <button class="game-card-close" onclick="this.parentElement.remove()">×</button>
+                <h3>game info: ${game.Title}</h3>
+                <p><strong>genres:</strong> ${game.Genres.join(', ')}</p>
+                <p><strong>top tags:</strong> ${game.Tags.join(', ')}</p>
             `;
+            gameInfoContainer.appendChild(card);
         });
     })
     .catch(error => {
@@ -44,7 +55,25 @@ function fetchGameStats() {
         console.error('Fetch error:', error);
         alert(`Error fetching game stats: ${error.message}. Ensure the Flask server is running on http://localhost:5000.`);
     });
-        
+}
+
+function createTabs(games) {
+    const tabsContainer = document.getElementById("dashboardTabs");
+    tabsContainer.innerHTML = "";
+
+    games.forEach((game, index) => {
+        const tab = document.createElement("button");
+        tab.className = `tab-button ${index === 0 ? 'active' : ''}`;
+        tab.textContent = game.Title;
+        tab.onclick = () => selectTab(index);
+        tabsContainer.appendChild(tab);
+    });
+}
+
+function selectTab(index) {
+    const tabs = document.querySelectorAll(".tab-button");
+    tabs.forEach(tab => tab.classList.remove("active"));
+    tabs[index].classList.add("active");
 }
 
 function parseOwnerRange(range) {
@@ -62,10 +91,57 @@ function renderChart(labels, owners, players, reviews) {
         data: {
             labels: labels,
             datasets: [
-                { label: "Estimated Owners", data: owners, backgroundColor: "rgba(75,192,192,0.6)" },
-                { label: "Players (Last 2 Weeks)", data: players, backgroundColor: "rgba(153,102,255,0.6)" },
-                { label: "Review Score", data: reviews, backgroundColor: "rgba(255,159,64,0.6)" }
+                { label: "Estimated Owners", data: owners, backgroundColor: "rgba(75,192,192,0.8)" },
+                { label: "Players (Last 2 Weeks)", data: players, backgroundColor: "rgba(153,102,255,0.8)" },
+                { label: "Review Score", data: reviews, backgroundColor: "rgba(255,159,64,0.8)" }
             ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: 12
+            },
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+function renderPlayersChart(labels, players) {
+    const ctx = document.getElementById("playersChart").getContext("2d");
+    if (playersChartInstance) playersChartInstance.destroy();
+
+    playersChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Players (Last 2 Weeks)",
+                data: players,
+                borderColor: "rgba(75,192,192,1)",
+                backgroundColor: "rgba(75,192,192,0.2)",
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: 12
+            },
+            plugins: {
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
         }
     });
 }
@@ -74,13 +150,20 @@ function renderTrends(trends) {
     const ctx = document.getElementById("trendChart").getContext("2d");
     if (trendChartInstance) trendChartInstance.destroy();
 
-    const labels = Array.from({ length: trends[Object.keys(trends)[0]].length }, (_, i) => `Day ${i + 1}`);
-    const datasets = Object.keys(trends).map((title, i) => ({
+    const trendKeys = Object.keys(trends);
+    if (trendKeys.length === 0 || !trends[trendKeys[0]] || trends[trendKeys[0]].length === 0) {
+        return;
+    }
+
+    const labels = Array.from({ length: trends[trendKeys[0]].length }, (_, i) => `Day ${i + 1}`);
+    const datasets = trendKeys.map((title, i) => ({
         label: title,
         data: trends[title],
         borderColor: `hsl(${i * 60}, 70%, 50%)`,
+        backgroundColor: `hsla(${i * 60}, 70%, 50%, 0.1)`,
         fill: false,
-        tension: 0.3
+        tension: 0.3,
+        borderWidth: 2
     }));
 
     trendChartInstance = new Chart(ctx, {
@@ -88,8 +171,15 @@ function renderTrends(trends) {
         data: { labels, datasets },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: 12
+            },
             plugins: {
-                title: { display: true, text: "Google Trends Interest (Past 7 Days)" }
+                legend: { display: true, position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true }
             }
         }
     });
