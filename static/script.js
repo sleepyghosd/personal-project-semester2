@@ -14,8 +14,8 @@ function toggleTheme() {
     const isDarkTheme = !body.classList.contains('light-theme');
     localStorage.setItem('theme', isDarkTheme ? 'dark' : 'light');
     
-    // Update button emoji
-    themeToggle.textContent = isDarkTheme ? '☀️' : '🌙';
+    // Update button text
+    themeToggle.textContent = isDarkTheme ? 'Light' : 'Dark';
 }
 
 // Initialize theme on page load
@@ -26,10 +26,10 @@ function initTheme() {
     
     if (savedTheme === 'light') {
         body.classList.add('light-theme');
-        themeToggle.textContent = '🌙';
+        themeToggle.textContent = 'Dark';
     } else {
         body.classList.remove('light-theme');
-        themeToggle.textContent = '☀️';
+        themeToggle.textContent = 'Light';
     }
 }
 
