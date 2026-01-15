@@ -3,6 +3,39 @@ let trendChartInstance = null;
 let playersChartInstance = null;
 let allGamesData = [];
 
+// Theme Toggle
+function toggleTheme() {
+    const body = document.body;
+    const themeToggle = document.getElementById('themeToggle');
+    
+    body.classList.toggle('light-theme');
+    
+    // Save theme preference
+    const isDarkTheme = !body.classList.contains('light-theme');
+    localStorage.setItem('theme', isDarkTheme ? 'dark' : 'light');
+    
+    // Update button emoji
+    themeToggle.textContent = isDarkTheme ? '☀️' : '🌙';
+}
+
+// Initialize theme on page load
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const body = document.body;
+    const themeToggle = document.getElementById('themeToggle');
+    
+    if (savedTheme === 'light') {
+        body.classList.add('light-theme');
+        themeToggle.textContent = '🌙';
+    } else {
+        body.classList.remove('light-theme');
+        themeToggle.textContent = '☀️';
+    }
+}
+
+// Initialize theme when page loads
+document.addEventListener('DOMContentLoaded', initTheme);
+
 function fetchGameStats() {
     const input = document.getElementById("appIdInput").value.trim();
     const loadingMsg = document.getElementById("loadingMessage");
