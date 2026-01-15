@@ -32,15 +32,38 @@ body.light-theme {
     --card-bg: rgba(230, 230, 230, 0.8);
 }
 
-body {
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg-primary);
-    min-height: 100vh;
-    color: var(--text-primary);
-    line-height: 1.6;
-    transition: background 0.3s ease, color 0.3s ease;
+html {
+    height: 100%;
+    width: 100%;
+    overflow: auto;
 }
 
+body {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0A0A0A;
+    background: linear-gradient(180deg, rgba(10, 10, 10, 1) 48%, rgba(55, 55, 99, 1) 82%, rgba(5, 2, 99, 1) 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    color: var(--text-primary);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+}
+
+body.light-theme {
+    background: #F6FAFA;
+    background: linear-gradient(180deg, rgba(246, 250, 250, 1) 48%, rgba(196, 199, 199, 1) 72%, rgba(4, 226, 234, 1) 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -448,10 +471,11 @@ body.light-theme .game-card:hover {
 
 ::-webkit-scrollbar {
     width: 8px;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
     border-radius: 4px;
 }
 
