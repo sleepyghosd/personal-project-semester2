@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+from dotenv import load_dotenv
 import requests
 import time
 import os
@@ -8,11 +9,21 @@ from pytrends.request import TrendReq
 from models import db, User, Search, Favorite, GameSearchStat
 from datetime import datetime
 
+# Load environment variables from .env file
+load_dotenv()
+
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
 # Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///game_database.db'
+# MySQL: mysql+pymysql://root:password@localhost:3306/gamestats
+# Set DATABASE_URL environment variable to use MySQL
+import os
+DB_URL = os.environ.get('DATABASE_URL')
+if not DB_URL:
+    DB_URL = 'mysql+pymysql://root:password@localhost:3306/gamestats'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
