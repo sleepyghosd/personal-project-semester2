@@ -12,6 +12,7 @@
     <header>
         <div class="container">
             <h1>Game Trends Analyzer</h1>
+            <div id="userDisplay" class="user-info"></div>
         </div>
     </header>
     
@@ -25,14 +26,21 @@
         
         <p id="loadingMessage" style="display:none;"> Analyzing data...</p>
 
-        <section class="charts-section">
-            <div class="chart-container">
-                <canvas id="statsChart" width="900" height="400"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="trendChart" width="900" height="400"></canvas>
-            </div>
-        </section>
+        <div class="content-grid">
+            <section class="charts-section">
+                <div class="chart-container">
+                    <canvas id="statsChart" width="900" height="400"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trendChart" width="900" height="400"></canvas>
+                </div>
+            </section>
+
+            <aside class="sidebar">
+                <div id="favoritesContainer" class="sidebar-section"></div>
+                <div id="mostSearchedContainer" class="sidebar-section"></div>
+            </aside>
+        </div>
 
         <section id="tagsOutput"></section>
     </main>
