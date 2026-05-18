@@ -35,14 +35,14 @@ async function loadOrCreateUser() {
     currentUserId = userId;
     updateUserDisplay();
 }
-
+// Update user display
 function updateUserDisplay() {
     const userDisplay = document.getElementById('userDisplay');
     if (userDisplay) {
         userDisplay.textContent = `User ID: ${currentUserId}`;
     }
 }
-
+// Favorites Management 
 async function loadUserFavorites() {
     if (!currentUserId) return;
     
@@ -56,7 +56,7 @@ async function loadUserFavorites() {
         console.error('Error loading favorites:', error);
     }
 }
-
+// Update favorites display
 function updateFavoritesDisplay() {
     const favContainer = document.getElementById('favoritesContainer');
     if (!favContainer) return;
@@ -65,7 +65,7 @@ function updateFavoritesDisplay() {
         favContainer.innerHTML = '<p>No favorites yet. Click the ♡ icon on games to add them.</p>';
         return;
     }
-    
+ // Display favorites    
     favContainer.innerHTML = '<h3>Your Favorites</h3>';
     const list = document.createElement('ul');
     list.className = 'favorites-list';
@@ -82,7 +82,7 @@ function updateFavoritesDisplay() {
     
     favContainer.appendChild(list);
 }
-
+// Add or remove favorites
 async function addFavorite(gameName, appId) {
     if (!currentUserId) return;
     
@@ -104,7 +104,7 @@ async function addFavorite(gameName, appId) {
         console.error('Error adding favorite:', error);
     }
 }
-
+// Remove favorite 
 async function removeFavorite(favId) {
     if (!currentUserId) return;
     
@@ -134,7 +134,7 @@ async function loadMostSearchedGames() {
         console.error('Error loading most searched games:', error);
     }
 }
-
+// Display most searched games 
 function displayMostSearched(games) {
     const container = document.getElementById('mostSearchedContainer');
     if (!container) return;
@@ -155,7 +155,7 @@ function displayMostSearched(games) {
     
     container.appendChild(list);
 }
-
+// Fetch game stats and trends
 function fetchGameStats() {
     const input = document.getElementById("appIdInput").value.trim();
     const loadingMsg = document.getElementById("loadingMessage");
@@ -165,7 +165,7 @@ function fetchGameStats() {
     if (!input) return alert("Enter some App IDs");
 
     loadingMsg.style.display = "block";
-
+// Include user_id in the request if available
     const url = currentUserId 
         ? `http://localhost:5000/game_stats?names=${encodeURIComponent(input)}&user_id=${currentUserId}`
         : `http://localhost:5000/game_stats?names=${encodeURIComponent(input)}`;
@@ -212,13 +212,13 @@ function fetchGameStats() {
     });
         
 }
-
+// Helper to parse owner range like "20,000..50,000" 
 function parseOwnerRange(range) {
     if (!range.includes("..")) return 0;
     const [min, max] = range.split("..").map(r => parseInt(r.replace(/\D/g, '')));
     return Math.round((min + max) / 2);
 }
-
+// Render stats chart
 function renderChart(labels, owners, players, reviews) {
     const ctx = document.getElementById("statsChart").getContext("2d");
     if (chartInstance) chartInstance.destroy();
@@ -235,7 +235,7 @@ function renderChart(labels, owners, players, reviews) {
         }
     });
 }
-
+// Render Google Trends chart 
 function renderTrends(trends) {
     const ctx = document.getElementById("trendChart").getContext("2d");
     if (trendChartInstance) trendChartInstance.destroy();

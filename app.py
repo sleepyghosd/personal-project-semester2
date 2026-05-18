@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
+from functools import wraps
 import requests
 import time
 import os
@@ -9,20 +10,18 @@ from pytrends.request import TrendReq
 from models import db, User, Search, Favorite, GameSearchStat
 from datetime import datetime
 
-# Load environment variables from .env file
 load_dotenv()
 
+# Initialize Flask app and CORS 
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
-# Database configuration
-# MySQL: mysql+pymysql://root:password@localhost:3306/gamestats
-# Set DATABASE_URL environment variable to use MySQL
-import os
+# Get database URL from environment variable
 DB_URL = os.environ.get('DATABASE_URL')
 if not DB_URL:
-    DB_URL = 'mysql+pymysql://root:password@localhost:3306/gamestats'
+    raise ValueError("DATABASE_URL not found in .env file")
 
+# Configure SQLAlchemy with the database URL 
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -31,6 +30,7 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+# API Endpoints and Logic 
 STEAM_API_BASE = "https://store.steampowered.com/api/appdetails"
 STEAMSPY_BASE = "https://steamspy.com/api.php"
 STEAM_APPS_FILE = "steam_apps.json"
@@ -80,6 +80,17 @@ def get_google_trends_data(names):
 
     return trends
 
+
+def validate_user(f):
+    """Decorator to validate user exists before route execution"""
+    @wraps(f)
+    def decorated_function(user_id, *args, **kwargs):
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        return f(user_id, *args, **kwargs)
+    return decorated_function
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
@@ -94,58 +105,71 @@ def get_game_stats():
     name_list = [name.strip().lower() for name in game_names.split(',')]
     results = []
     names_for_trends = []
+    user = None
 
-    # Track searches in database
+    # Validate user if provided
     if user_id:
         try:
             user = User.query.get(int(user_id))
-            if user:
-                for name in name_list:
-                    app_id = name_to_appid.get(name)
-                    if app_id:
-                        # Add to user searches
-                        search = Search(user_id=user.id, game_name=name)
-                        db.session.add(search)
-                        
-                        # Update global game stats
-                        stat = GameSearchStat.query.filter_by(game_name=name).first()
-                        if stat:
-                            stat.search_count += 1
-                            stat.last_searched = datetime.utcnow()
-                        else:
-                            stat = GameSearchStat(game_name=name, search_count=1)
-                        db.session.add(stat)
-                db.session.commit()
-        except Exception as e:
-            print(f"Error tracking search: {e}")
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+        except ValueError:
+            return jsonify({"error": "Invalid user_id"}), 400
 
+    # SINGLE LOOP - process each game
     for name in name_list:
         app_id = name_to_appid.get(name)
         if not app_id:
             print(f"Game not found: {name}")
             continue
 
-        steamspy = get_steamspy_details(app_id)
-        steam = get_steam_api_details(app_id)
+        # Track search in database (if user exists)
+        if user:
+            try:
+                search = Search(user_id=user.id, game_name=name)
+                db.session.add(search)
+                
+                # Update global game stats
+                stat = GameSearchStat.query.filter_by(game_name=name).first()
+                if stat:
+                    stat.search_count += 1
+                    stat.last_searched = datetime.utcnow()
+                else:
+                    stat = GameSearchStat(game_name=name, search_count=1)
+                db.session.add(stat)
+            except Exception as e:
+                print(f"Error tracking search for {name}: {e}")
 
-        if not steamspy or not steam:
-            continue
+        # Get API data
+        try:
+            steamspy = get_steamspy_details(app_id)
+            steam = get_steam_api_details(app_id)
 
-        names_for_trends.append(steamspy.get("name", "Unknown"))
+            if not steamspy or not steam:
+                print(f"API data missing for {name} (appid: {app_id})")
+                continue
 
-        tag_items = sorted(steamspy.get("tags", {}).items(), key=lambda x: x[1], reverse=True)
-        top_tags = [tag for tag, _ in tag_items[:3]]
-        genres = [g['description'] for g in steam.get('genres', [])]
+            names_for_trends.append(steamspy.get("name", "Unknown"))
 
-        results.append({
-            "AppID": app_id,
-            "Title": steamspy.get("name", "Unknown"),
-            "Owners": steamspy.get("owners", "0..0"),
-            "Players_2Weeks": steamspy.get("players_2weeks", 0),
-            "ReviewScore": steamspy.get("positive", 0) - steamspy.get("negative", 0),
-            "Genres": genres,
-            "Tags": top_tags
-        })
+            tag_items = sorted(steamspy.get("tags", {}).items(), key=lambda x: x[1], reverse=True)
+            top_tags = [tag for tag, _ in tag_items[:3]]
+            genres = [g['description'] for g in steam.get('genres', [])]
+
+            results.append({
+                "AppID": app_id,
+                "Title": steamspy.get("name", "Unknown"),
+                "Owners": steamspy.get("owners", "0..0"),
+                "Players_2Weeks": steamspy.get("players_2weeks", 0),
+                "ReviewScore": steamspy.get("positive", 0) - steamspy.get("negative", 0),
+                "Genres": genres,
+                "Tags": top_tags
+            })
+        except Exception as e:
+            print(f"Error processing {name}: {e}")
+
+    # Commit all database changes once
+    if user:
+        db.session.commit()
 
     trends = get_google_trends_data(names_for_trends)
 
@@ -182,22 +206,16 @@ def get_user(user_id):
 
 # Search History Endpoints
 @app.route('/api/users/<int:user_id>/searches', methods=['GET'])
+@validate_user
 def get_user_searches(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
     searches = Search.query.filter_by(user_id=user_id).order_by(Search.search_date.desc()).all()
     return jsonify([search.to_dict() for search in searches])
 
 
 @app.route('/api/users/<int:user_id>/latest-searches', methods=['GET'])
+@validate_user
 def get_latest_searches(user_id):
-    """Get the most recent 10 searches for a user"""
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
+    """Get the most recent N searches for a user"""
     limit = request.args.get('limit', 10, type=int)
     searches = Search.query.filter_by(user_id=user_id).order_by(Search.search_date.desc()).limit(limit).all()
     return jsonify([search.to_dict() for search in searches])
@@ -205,21 +223,15 @@ def get_latest_searches(user_id):
 
 # Favorites Endpoints
 @app.route('/api/users/<int:user_id>/favorites', methods=['GET'])
+@validate_user
 def get_user_favorites(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
     favorites = Favorite.query.filter_by(user_id=user_id).all()
     return jsonify([fav.to_dict() for fav in favorites])
 
 
 @app.route('/api/users/<int:user_id>/favorites', methods=['POST'])
+@validate_user
 def add_favorite(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
     data = request.get_json()
     game_name = data.get('game_name')
     app_id = data.get('app_id')
@@ -240,6 +252,7 @@ def add_favorite(user_id):
 
 
 @app.route('/api/users/<int:user_id>/favorites/<int:fav_id>', methods=['DELETE'])
+@validate_user
 def remove_favorite(user_id, fav_id):
     favorite = Favorite.query.filter_by(id=fav_id, user_id=user_id).first()
     if not favorite:
